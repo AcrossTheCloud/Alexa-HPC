@@ -46,7 +46,7 @@ class StartHPCIntentHandler(AbstractRequestHandler):
 
     def handle(self, handler_input):
 
-        speech_text = "Your HPC is starting." # default
+        speech_text = "Your cluster is starting." # default
 
         completed = subprocess.run(
             ['./pcluster-cli', 
@@ -60,7 +60,7 @@ class StartHPCIntentHandler(AbstractRequestHandler):
         )
 
         if completed.returncode != 0:
-            speech_text = "Problem starting your HPC cluster. " + \
+            speech_text = "Problem starting your cluster. " + \
                 completed.stdout + " " + \
                 completed.stderr
 
@@ -82,7 +82,7 @@ class HPCStatusIntentHandler(AbstractRequestHandler):
 
     def handle(self, handler_input):
         # type: (HandlerInput) -> Response
-        speech_text = "Your HPC is starting." # default
+        speech_text = "Your cluster is starting." # default
 
         completed = subprocess.run(
             ['./pcluster-cli',
@@ -193,7 +193,7 @@ class FallbackIntentHandler(AbstractRequestHandler):
     def handle(self, handler_input):
         # type: (HandlerInput) -> Response
         speech_text = (
-            "The Alexa HPC skill can't help you with that.  "
+            "The Alexa Parallel Cluster skill can't help you with that.  "
             "You can ask me to start a cluster, check a cluster, or delete a cluster.")
         reprompt = "You can ask me to start a cluster, check cluster, or delete a cluster."
         handler_input.response_builder.speak(speech_text).ask(reprompt)
