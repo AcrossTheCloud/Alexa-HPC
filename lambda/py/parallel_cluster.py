@@ -118,7 +118,7 @@ class DeleteHPCIntentHandler(AbstractRequestHandler):
 
     def can_handle(self, handler_input):
         # type: (HandlerInput) -> bool
-        return is_intent_name("StopHPCIntent")(handler_input)
+        return is_intent_name("DeleteHPCIntent")(handler_input)
 
     def handle(self, handler_input):
         # type: (HandlerInput) -> Response
