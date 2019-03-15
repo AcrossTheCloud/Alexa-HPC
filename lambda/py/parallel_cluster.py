@@ -163,8 +163,8 @@ class FallbackIntentHandler(AbstractRequestHandler):
         # type: (HandlerInput) -> Response
         speech_text = (
             "The Alexa HPC skill can't help you with that.  "
-            "You can ask me to start a HPC")
-        reprompt = "You can ask me to start a HPC."
+            "You can ask me to start a cluster")
+        reprompt = "You can ask me to start a cluster."
         handler_input.response_builder.speak(speech_text).ask(reprompt)
         return handler_input.response_builder.response
 
