@@ -35,13 +35,12 @@
                     "samples": [
                         "to check on my cluster",
                         "check my cluster",
-                        "the status of the cluster",
-                        "the status of my cluster",
-                        "what is the status of my cluster"
+                        "check on the cluster",
+                        "check cluster"
                     ]
                 },
                 {
-                    "name": "StopHPCIntent",
+                    "name": "DeleteHPCIntent",
                     "slots": [],
                     "samples": [
                         "delete my cluster",

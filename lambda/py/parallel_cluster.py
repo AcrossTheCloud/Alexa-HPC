@@ -30,7 +30,7 @@ class LaunchRequestHandler(AbstractRequestHandler):
 
     def handle(self, handler_input):
         # type: (HandlerInput) -> Response
-        speech_text = "Welcome to the Parallel Cluster skill, you can ask me to start a cluster, or for the status of the cluster, or to delete the cluster."
+        speech_text = "Welcome to the Parallel Cluster skill, you can ask me to start a cluster, or to check the cluster, or to delete the cluster."
 
         handler_input.response_builder.speak(speech_text).set_card(
             SimpleCard("Parallel Cluster", speech_text)).set_should_end_session(
@@ -49,19 +49,27 @@ class StartHPCIntentHandler(AbstractRequestHandler):
         speech_text = "Your HPC is starting." # default
 
         completed = subprocess.run(
-            ['pcluster', 'createcluster', 'myAlexaCluster','-nw'],
+            ['./pcluster-cli', 
+                'create', 
+                '-nw', 
+                '-c', '.parallelcluster/config', 
+                'myAlexaCluster'],
             stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            encoding='utf-8'
         )
 
         if completed.returncode != 0:
-            speech_text = "Problem starting your HPC cluster. " + completed.stdout.decode('utf-8') + " " + completed.stderr.decode('utf-8')
+            speech_text = "Problem starting your HPC cluster. " + \
+                completed.stdout + " " + \
+                completed.stderr
 
-        print(completed.stdout.decode('utf-8'))
-        print(completed.stderr.decode('utf-8'))
+        print(completed.stdout)
+        print(completed.stderr)
         
         handler_input.response_builder.speak(speech_text).set_card(
             SimpleCard("Parallel Cluster", speech_text)).set_should_end_session(
-            True)
+            False)
         return handler_input.response_builder.response
 
 
@@ -77,32 +85,36 @@ class HPCStatusIntentHandler(AbstractRequestHandler):
         speech_text = "Your HPC is starting." # default
 
         completed = subprocess.run(
-            ['pcluster', 'createcluster', 'myAlexaCluster','-nw'],
+            ['./pcluster-cli',
+                'status',
+                '-nw',
+                '-c', '.parallelcluster/config',
+                'myAlexaCluster'],
             stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            encoding='utf-8'
         )
 
-        stdout = completed.stdout.decode('utf-8')
-
-        if "DELETE_IN_PROGRESS" in stdout:
+        if "DELETE_IN_PROGRESS" in completed.stdout:
             speech_text = "Your cluster is being deleted."
 
-        if "does not exist" in stdout:
+        if "does not exist" in completed.stdout:
             speech_text = "Your cluster has been deleted."
         
-        if "CREATE_COMPLETE" in stdout:
-            for line in stdout.splitlines():
+        if "CREATE_COMPLETE" in completed.stdout:
+            for line in completed.stdout.splitlines():
                 if "MasterPublicIP" in line:
                     ip = line.split(": ")[1]
                     speech_text = 'Your cluster has started. The master node IP address is <say-as interpret-as="digits">'+ip+'</say-as>.'
 
         handler_input.response_builder.speak(speech_text).set_card(
             SimpleCard("Parallel Cluster", speech_text)).set_should_end_session(
-            True)
+            False)
         return handler_input.response_builder.response
 
 
-class StopHPCIntentHandler(AbstractRequestHandler):
-    """Handler for Stop HPC Intent."""
+class DeleteHPCIntentHandler(AbstractRequestHandler):
+    """Handler for Delete HPC Intent."""
 
     def can_handle(self, handler_input):
         # type: (HandlerInput) -> bool
@@ -110,7 +122,26 @@ class StopHPCIntentHandler(AbstractRequestHandler):
 
     def handle(self, handler_input):
         # type: (HandlerInput) -> Response
-        speech_text = "Your HPC is stopping."
+        speech_text = "Your cluster is being deleted." # default
+
+        completed = subprocess.run(
+            ['./pcluster-cli',
+                'delete',
+                '-nw',
+                '-c', '.parallelcluster/config',
+                'myAlexaCluster'],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            encoding='utf-8'
+        )
+
+        if completed.returncode != 0:
+            speech_text = "Problem deleting your cluster. " + \
+                completed.stdout + " " + \
+                completed.stderr
+
+        print(completed.stdout.decode('utf-8'))
+        print(completed.stderr.decode('utf-8'))
 
         handler_input.response_builder.speak(speech_text).set_card(
             SimpleCard("Parallel Cluster", speech_text)).set_should_end_session(
@@ -163,8 +194,8 @@ class FallbackIntentHandler(AbstractRequestHandler):
         # type: (HandlerInput) -> Response
         speech_text = (
             "The Alexa HPC skill can't help you with that.  "
-            "You can ask me to start a cluster")
-        reprompt = "You can ask me to start a cluster."
+            "You can ask me to start a cluster, check a cluster, or delete a cluster.")
+        reprompt = "You can ask me to start a cluster, check cluster, or delete a cluster."
         handler_input.response_builder.speak(speech_text).ask(reprompt)
         return handler_input.response_builder.response
 
@@ -201,7 +232,7 @@ class CatchAllExceptionHandler(AbstractExceptionHandler):
 sb.add_request_handler(LaunchRequestHandler())
 sb.add_request_handler(StartHPCIntentHandler())
 sb.add_request_handler(HPCStatusIntentHandler())
-sb.add_request_handler(StopHPCIntentHandler())
+sb.add_request_handler(DeleteHPCIntentHandler())
 sb.add_request_handler(HelpIntentHandler())
 sb.add_request_handler(CancelOrStopIntentHandler())
 sb.add_request_handler(FallbackIntentHandler())
