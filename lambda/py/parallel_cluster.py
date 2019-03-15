@@ -33,7 +33,7 @@ class LaunchRequestHandler(AbstractRequestHandler):
         speech_text = "Welcome to the Parallel Cluster skill, you can ask me to start a cluster, or for the status of the cluster, or to delete the cluster."
 
         handler_input.response_builder.speak(speech_text).set_card(
-            SimpleCard("Hello World", speech_text)).set_should_end_session(
+            SimpleCard("Parallel Cluster", speech_text)).set_should_end_session(
             False)
         return handler_input.response_builder.response
 
