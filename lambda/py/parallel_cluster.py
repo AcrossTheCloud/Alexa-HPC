@@ -140,8 +140,8 @@ class DeleteHPCIntentHandler(AbstractRequestHandler):
                 completed.stdout + " " + \
                 completed.stderr
 
-        print(completed.stdout.decode('utf-8'))
-        print(completed.stderr.decode('utf-8'))
+        print(completed.stdout)
+        print(completed.stderr)
 
         handler_input.response_builder.speak(speech_text).set_card(
             SimpleCard("Parallel Cluster", speech_text)).set_should_end_session(
