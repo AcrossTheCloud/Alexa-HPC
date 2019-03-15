@@ -95,6 +95,9 @@ class HPCStatusIntentHandler(AbstractRequestHandler):
             encoding='utf-8'
         )
 
+        print(completed.stdout)
+        print(completed.stderr)
+
         if "DELETE_IN_PROGRESS" in completed.stdout:
             speech_text = "Your cluster is being deleted."
 
