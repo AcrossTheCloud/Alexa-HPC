@@ -87,7 +87,7 @@ class HPCStatusIntentHandler(AbstractRequestHandler):
         completed = subprocess.run(
             ['./pcluster-cli',
                 'status',
-                '-nw',
+                '-nw',  # must use -nw here otherwise it will keep running and outputting until cluster created
                 '-c', '.parallelcluster/config',
                 'myAlexaCluster'],
             stdout=subprocess.PIPE,
@@ -105,6 +105,15 @@ class HPCStatusIntentHandler(AbstractRequestHandler):
             speech_text = "Your cluster has been deleted."
         
         if "CREATE_COMPLETE" in completed.stdout:
+            completed = subprocess.run( # need to run again without -nw to get full listing for IP address
+                ['./pcluster-cli',
+                    'status', 
+                    '-c', '.parallelcluster/config',
+                    'myAlexaCluster'],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                encoding='utf-8'
+            )
             for line in completed.stdout.splitlines():
                 if "MasterPublicIP" in line:
                     ip = line.split(": ")[1]
