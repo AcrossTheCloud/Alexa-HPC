@@ -200,7 +200,8 @@ class CatchAllExceptionHandler(AbstractExceptionHandler):
 
 sb.add_request_handler(LaunchRequestHandler())
 sb.add_request_handler(StartHPCIntentHandler())
-sb.add_request_handler(HPCStatusHandler())
+sb.add_request_handler(HPCStatusIntentHandler())
+sb.add_request_handler(StopHPCIntentHandler())
 sb.add_request_handler(HelpIntentHandler())
 sb.add_request_handler(CancelOrStopIntentHandler())
 sb.add_request_handler(FallbackIntentHandler())
