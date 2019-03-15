@@ -10,7 +10,7 @@
               "custom/default"
             ],
             "runtime": "python3.6",
-            "handler": "hello_world.handler"
+            "handler": "start_HPC.handler"
           }
         ]
       },

@@ -1,22 +1,15 @@
-Build an Alexa Hello World Skill in ASK Python SDK (using Classes)
+Alexa interface around AWS ParallelCluster
 =========================================
 
-This tutorial will walk first-time Alexa skills developers through all the 
-required steps involved in creating a skill using this hello world template, 
-called ‘hello world’. This post assumes you have some familiarity with 
-Python (or a similar programming language) and the Alexa Skills Kit.
+# Privacy policy
 
-<img src="https://m.media-amazon.com/images/G/01/mobile-apps/dex/alexa/alexa-skills-kit/tutorials/quiz-game/header._TTH_.png" />
+The app doesn't store any personal information.
 
-Concepts
---------
+# Terms of use
 
-This simple sample has no external dependencies or session management,
-and shows the most basic example of how to create a Lambda function for
-handling Alexa Skill requests.
+Use at your own risk.
 
-Setup
------
+# Setup
 
 To run this example skill you need to do two things. The first is to
 deploy the example code in lambda, and the second is to configure the

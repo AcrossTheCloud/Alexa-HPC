@@ -13,6 +13,9 @@ from ask_sdk_core.handler_input import HandlerInput
 from ask_sdk_model.ui import SimpleCard
 from ask_sdk_model import Response
 
+# use subprocess for now to talk to pcluster command
+import subprocess
+
 sb = SkillBuilder()
 
 logger = logging.getLogger(__name__)
@@ -27,7 +30,7 @@ class LaunchRequestHandler(AbstractRequestHandler):
 
     def handle(self, handler_input):
         # type: (HandlerInput) -> Response
-        speech_text = "Welcome to the Alexa Skills Kit, you can say hello!"
+        speech_text = "Welcome to the Parallel Cluster skill, you can ask me to start a cluster, or for the status of the cluster, or to delete the cluster."
 
         handler_input.response_builder.speak(speech_text).set_card(
             SimpleCard("Hello World", speech_text)).set_should_end_session(
@@ -35,18 +38,82 @@ class LaunchRequestHandler(AbstractRequestHandler):
         return handler_input.response_builder.response
 
 
-class HelloWorldIntentHandler(AbstractRequestHandler):
-    """Handler for Hello World Intent."""
+class StartHPCIntentHandler(AbstractRequestHandler):
+    """Handler for Start HPC Intent."""
     def can_handle(self, handler_input):
         # type: (HandlerInput) -> bool
-        return is_intent_name("HelloWorldIntent")(handler_input)
+        return is_intent_name("StartHPCIntent")(handler_input)
+
+    def handle(self, handler_input):
+
+        speech_text = "Your HPC is starting." # default
+
+        completed = subprocess.run(
+            ['pcluster', 'createcluster', 'myAlexaCluster','-nw'],
+            stdout=subprocess.PIPE,
+        )
+
+        if completed.returncode != 0:
+            speech_text = "Problem starting your HPC cluster. " + completed.stdout.decode('utf-8') + " " + completed.stderr.decode('utf-8')
+
+        print(completed.stdout.decode('utf-8'))
+        print(completed.stderr.decode('utf-8'))
+        
+        handler_input.response_builder.speak(speech_text).set_card(
+            SimpleCard("Parallel Cluster", speech_text)).set_should_end_session(
+            True)
+        return handler_input.response_builder.response
+
+
+class HPCStatusIntentHandler(AbstractRequestHandler):
+    """Handler for HPC Status Intent."""
+
+    def can_handle(self, handler_input):
+        # type: (HandlerInput) -> bool
+        return is_intent_name("HPCStatusIntent")(handler_input)
 
     def handle(self, handler_input):
         # type: (HandlerInput) -> Response
-        speech_text = "Hello Python World from Classes!"
+        speech_text = "Your HPC is starting." # default
+
+        completed = subprocess.run(
+            ['pcluster', 'createcluster', 'myAlexaCluster','-nw'],
+            stdout=subprocess.PIPE,
+        )
+
+        stdout = completed.stdout.decode('utf-8')
+
+        if "DELETE_IN_PROGRESS" in stdout:
+            speech_text = "Your cluster is being deleted."
+
+        if "does not exist" in stdout:
+            speech_text = "Your cluster has been deleted."
+        
+        if "CREATE_COMPLETE" in stdout:
+            for line in stdout.splitlines():
+                if "MasterPublicIP" in line:
+                    ip = line.split(": ")[1]
+                    speech_text = 'Your cluster has started. The master node IP address is <say-as interpret-as="digits">'+ip+'</say-as>.'
 
         handler_input.response_builder.speak(speech_text).set_card(
-            SimpleCard("Hello World", speech_text)).set_should_end_session(
+            SimpleCard("Parallel Cluster", speech_text)).set_should_end_session(
+            True)
+        return handler_input.response_builder.response
+
+
+class StopHPCIntentHandler(AbstractRequestHandler):
+    """Handler for Stop HPC Intent."""
+
+    def can_handle(self, handler_input):
+        # type: (HandlerInput) -> bool
+        return is_intent_name("StopHPCIntent")(handler_input)
+
+    def handle(self, handler_input):
+        # type: (HandlerInput) -> Response
+        speech_text = "Your HPC is stopping."
+
+        handler_input.response_builder.speak(speech_text).set_card(
+            SimpleCard("Parallel Cluster", speech_text)).set_should_end_session(
             True)
         return handler_input.response_builder.response
 
@@ -59,11 +126,11 @@ class HelpIntentHandler(AbstractRequestHandler):
 
     def handle(self, handler_input):
         # type: (HandlerInput) -> Response
-        speech_text = "You can say hello to me!"
+        speech_text = "You can say say !"
 
         handler_input.response_builder.speak(speech_text).ask(
             speech_text).set_card(SimpleCard(
-                "Hello World", speech_text))
+                "Parallel Cluster", speech_text))
         return handler_input.response_builder.response
 
 
@@ -79,7 +146,7 @@ class CancelOrStopIntentHandler(AbstractRequestHandler):
         speech_text = "Goodbye!"
 
         handler_input.response_builder.speak(speech_text).set_card(
-            SimpleCard("Hello World", speech_text))
+            SimpleCard("Parallel Cluster", speech_text))
         return handler_input.response_builder.response
 
 
@@ -95,9 +162,9 @@ class FallbackIntentHandler(AbstractRequestHandler):
     def handle(self, handler_input):
         # type: (HandlerInput) -> Response
         speech_text = (
-            "The Hello World skill can't help you with that.  "
-            "You can say hello!!")
-        reprompt = "You can say hello!!"
+            "The Alexa HPC skill can't help you with that.  "
+            "You can ask me to start a HPC")
+        reprompt = "You can ask me to start a HPC."
         handler_input.response_builder.speak(speech_text).ask(reprompt)
         return handler_input.response_builder.response
 
@@ -125,14 +192,15 @@ class CatchAllExceptionHandler(AbstractExceptionHandler):
         # type: (HandlerInput, Exception) -> Response
         logger.error(exception, exc_info=True)
 
-        speech = "Sorry, there was some problem. Please try again!!"
+        speech = "Sorry, there was some problem. Please try again."
         handler_input.response_builder.speak(speech).ask(speech)
 
         return handler_input.response_builder.response
 
 
 sb.add_request_handler(LaunchRequestHandler())
-sb.add_request_handler(HelloWorldIntentHandler())
+sb.add_request_handler(StartHPCIntentHandler())
+sb.add_request_handler(HPCStatusHandler())
 sb.add_request_handler(HelpIntentHandler())
 sb.add_request_handler(CancelOrStopIntentHandler())
 sb.add_request_handler(FallbackIntentHandler())
