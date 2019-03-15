@@ -1,6 +1,9 @@
 Alexa interface around AWS ParallelCluster
 =========================================
 
+# About
+At this stage, just an interface for managing the launching and deletion of a cluster. Coming soon: the ability to launch a job on that cluster.
+
 # Privacy policy
 
 The app doesn't store any personal information.
