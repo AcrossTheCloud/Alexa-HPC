@@ -23,8 +23,6 @@
                     "name": "StartHPCIntent",
                     "slots": [],
                     "samples": [
-                        "start a cluster",
-                        "start cluster",
                         "launch cluster",
                         "launch a cluster"
                     ]
@@ -37,6 +35,25 @@
                         "check my cluster",
                         "check on the cluster",
                         "check cluster"
+                    ]
+                },
+                {
+                    "name": "HPCStartJobIntent",
+                    "slots": [],
+                    "samples": [
+                        "start job",
+                        "start a job",
+                        "start a job running",
+                        "start my job running"
+                    ]
+                },
+                {
+                    "name": "HPCJobOutputIntent",
+                    "slots": [],
+                    "samples": [
+                        "tell me the job output",
+                        "for job output",
+                        "job output"
                     ]
                 },
                 {

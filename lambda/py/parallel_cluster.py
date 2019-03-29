@@ -16,6 +16,15 @@ from ask_sdk_model import Response
 # use subprocess for now to talk to pcluster command
 import subprocess
 
+# import modules for talking over ssh
+import boto3
+import paramiko
+import os
+import urllib
+import re
+
+os.environ['LD_LIBRARY_PATH'] = './.libs_cffi_backend'
+
 sb = SkillBuilder()
 
 logger = logging.getLogger(__name__)
@@ -45,7 +54,6 @@ class StartHPCIntentHandler(AbstractRequestHandler):
         return is_intent_name("StartHPCIntent")(handler_input)
 
     def handle(self, handler_input):
-
         speech_text = "Your cluster is starting." # default
 
         completed = subprocess.run(
@@ -69,9 +77,8 @@ class StartHPCIntentHandler(AbstractRequestHandler):
         
         handler_input.response_builder.speak(speech_text).set_card(
             SimpleCard("Parallel Cluster", speech_text)).set_should_end_session(
-            False)
+            True)
         return handler_input.response_builder.response
-
 
 class HPCStatusIntentHandler(AbstractRequestHandler):
     """Handler for HPC Status Intent."""
@@ -117,11 +124,135 @@ class HPCStatusIntentHandler(AbstractRequestHandler):
             for line in completed.stdout.splitlines():
                 if "MasterPublicIP" in line:
                     ip = line.split(": ")[1]
-                    speech_text = 'Your cluster has started. The master node IP address is <say-as interpret-as="digits">'+ip+'</say-as>.'
+                    speech_text = 'Your cluster has started. The master node IP address is <say-as interpret-as="digits">'+ip+'</say-as>. You can ask me to start a job running now.'
 
         handler_input.response_builder.speak(speech_text).set_card(
             SimpleCard("Parallel Cluster", speech_text)).set_should_end_session(
-            False)
+            True)
+        return handler_input.response_builder.response
+
+
+class HPCStartJobIntentHandler(AbstractRequestHandler):
+    """Handler for starting a job"""
+
+    def can_handle(self, handler_input):
+            # type: (HandlerInput) -> bool
+        return is_intent_name("HPCStartJobIntent")(handler_input)
+
+    def handle(self, handler_input):
+        s3_client = boto3.client('s3')
+        #Download private key file from secure S3 bucket
+        s3_client.download_file(os.getenv('S3_KEY_BUCKET'),
+                                'alexa-hpc.pem', '/tmp/keyname.pem')
+
+        completed = subprocess.run(  # need to run again without -nw to get full listing for IP address
+            ['./pcluster-cli',
+             'status',
+             '-c', '.parallelcluster/config',
+             'myAlexaCluster'],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            encoding='utf-8'
+        )
+        ip = "127.0.0.1"
+        for line in completed.stdout.splitlines():
+            if "MasterPublicIP" in line:
+                ip = line.split(": ")[1]
+
+        ssh_key = paramiko.RSAKey.from_private_key_file("/tmp/keyname.pem")
+        c = paramiko.SSHClient()
+        c.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+
+        print("Connecting to " + ip)
+        c.connect(hostname=ip, username="ec2-user", pkey=ssh_key)
+
+        command = "source /home/ec2-user/.bash_profile && Rscript /home/ec2-user/rmpi_test.R > /home/ec2-user/job.out"
+
+        stdin, stdout, stderr = c.exec_command(command)
+        stdout = stdout.read().decode('utf-8')
+        stderr = stderr.read().decode('utf-8')
+
+        print(stdout)
+        print(stdin)
+
+        pattern = re.compile(r'\s+')
+        stderr_no_whitespace = re.sub(pattern, '', stderr)
+
+        if len(stderr_no_whitespace) > 0:  # fixme - need to check stdout for something expected
+            handler_input.response_builder.speak("There was an error starting your job. " + stderr).set_card(
+                SimpleCard("Parallel Cluster", "There was an error starting your job. " + stderr)).set_should_end_session(
+                True)
+        else:
+            speech_text = "Job started."
+            for line in stdout.splitlines():
+                if '"' in line:
+                    speechtext += re.findall(r'"([^"]*)"', line) + " "
+            handler_input.response_builder.speak(speech_text).set_card(
+                SimpleCard("Parallel Cluster", speech_text)).set_should_end_session(
+                True)
+
+        return handler_input.response_builder.response
+
+
+class HPCJobOutputIntentHandler(AbstractRequestHandler):
+    """Handler for job output"""
+
+    def can_handle(self, handler_input):
+            # type: (HandlerInput) -> bool
+        return is_intent_name("HPCJobOutputIntent")(handler_input)
+
+    def handle(self, handler_input):
+        s3_client = boto3.client('s3')
+        #Download private key file from secure S3 bucket
+        s3_client.download_file(os.getenv('S3_KEY_BUCKET'),
+                                'alexa-hpc.pem', '/tmp/keyname.pem')
+
+        completed = subprocess.run(  # need to run again without -nw to get full listing for IP address
+            ['./pcluster-cli',
+             'status',
+             '-c', '.parallelcluster/config',
+             'myAlexaCluster'],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            encoding='utf-8'
+        )
+        ip = "127.0.0.1"
+        for line in completed.stdout.splitlines():
+            if "MasterPublicIP" in line:
+                ip = line.split(": ")[1]
+
+        ssh_key = paramiko.RSAKey.from_private_key_file("/tmp/keyname.pem")
+        c = paramiko.SSHClient()
+        c.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+
+        print("Connecting to " + ip)
+        c.connect(hostname=ip, username="ec2-user", pkey=ssh_key)
+
+        command = "cat /home/ec2-user/job.out"
+
+        stdin, stdout, stderr = c.exec_command(command)
+        stdout = stdout.read().decode('utf-8')
+        stderr = stderr.read().decode('utf-8')
+
+        print(stdout)
+        print(stdin)
+
+        pattern = re.compile(r'\s+')
+        stderr_no_whitespace = re.sub(pattern, '', stderr)
+
+        if len(stderr_no_whitespace) > 0:  # fixme - need to check stdout for something expected
+            handler_input.response_builder.speak(stderr).set_card(
+                SimpleCard("Parallel Cluster", stderr)).set_should_end_session(
+                True)
+        else:
+            speech_text = ""
+            for line in stdout.splitlines():
+                if '"' in line:
+                    speech_text += re.findall(r'"([^"]*)"', line)[0] + ". "
+            handler_input.response_builder.speak(speech_text).set_card(
+                SimpleCard("Parallel Cluster", speech_text)).set_should_end_session(
+                True)
+
         return handler_input.response_builder.response
 
 
@@ -244,6 +375,8 @@ class CatchAllExceptionHandler(AbstractExceptionHandler):
 sb.add_request_handler(LaunchRequestHandler())
 sb.add_request_handler(StartHPCIntentHandler())
 sb.add_request_handler(HPCStatusIntentHandler())
+sb.add_request_handler(HPCStartJobIntentHandler())
+sb.add_request_handler(HPCJobOutputIntentHandler())
 sb.add_request_handler(DeleteHPCIntentHandler())
 sb.add_request_handler(HelpIntentHandler())
 sb.add_request_handler(CancelOrStopIntentHandler())

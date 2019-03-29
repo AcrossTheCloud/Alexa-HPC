@@ -1,2 +1,3 @@
 ask-sdk-core
-aws-parallelcluster
+git+https://github.com/AcrossTheCloud/aws-parallelcluster.git#subdirectory=cli
+paramiko
