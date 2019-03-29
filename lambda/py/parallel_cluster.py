@@ -337,8 +337,8 @@ class FallbackIntentHandler(AbstractRequestHandler):
         # type: (HandlerInput) -> Response
         speech_text = (
             "The Alexa Parallel Cluster skill can't help you with that.  "
-            "You can ask me to start a cluster, check a cluster, or delete a cluster.")
-        reprompt = "You can ask me to start a cluster, check cluster, or delete a cluster."
+            "You can ask me to launch a cluster, check a cluster, start a job, get job output, or delete a cluster.")
+        reprompt = "You can ask me to launch a cluster, check a cluster, start a job, get job output, or delete a cluster.."
         handler_input.response_builder.speak(speech_text).ask(reprompt)
         return handler_input.response_builder.response
 
