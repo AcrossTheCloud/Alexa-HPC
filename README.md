@@ -2,7 +2,8 @@ Alexa interface around AWS ParallelCluster
 =========================================
 
 # About
-At this stage, just an interface for managing the launching and deletion of a cluster. Coming soon: the ability to launch a job on that cluster.
+At this stage, just an interface for managing the launching and deletion of a cluster. 
+Supports running a [simple R mpi job](rmpi_test.R) that fetches some data from s3 for computation.
 
 # Privacy policy
 
