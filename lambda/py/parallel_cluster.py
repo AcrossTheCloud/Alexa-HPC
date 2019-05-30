@@ -39,7 +39,7 @@ class LaunchRequestHandler(AbstractRequestHandler):
 
     def handle(self, handler_input):
         # type: (HandlerInput) -> Response
-        speech_text = "Welcome to the Parallel Cluster skill, you can ask me to start a cluster, or to check the cluster, or to delete the cluster."
+        speech_text = "Welcome to the Parallel Cluster skill, you can ask me to launch a cluster, or to check the cluster, start a job running, get job output, or to delete the cluster."
 
         handler_input.response_builder.speak(speech_text).set_card(
             SimpleCard("Parallel Cluster", speech_text)).set_should_end_session(
@@ -110,8 +110,11 @@ class HPCStatusIntentHandler(AbstractRequestHandler):
 
         if "does not exist" in completed.stdout:
             speech_text = "Your cluster has been deleted."
+
+        end_session = True
         
         if "CREATE_COMPLETE" in completed.stdout:
+            end_session = False # keep session open so user can start a job
             completed = subprocess.run( # need to run again without -nw to get full listing for IP address
                 ['./pcluster-cli',
                     'status', 
@@ -124,11 +127,10 @@ class HPCStatusIntentHandler(AbstractRequestHandler):
             for line in completed.stdout.splitlines():
                 if "MasterPublicIP" in line:
                     ip = line.split(": ")[1]
-                    speech_text = 'Your cluster has started. The master node IP address is <say-as interpret-as="digits">'+ip+'</say-as>. You can ask me to start a job running now.'
+                    speech_text = 'Your cluster has started. The master node IP address is <say-as interpret-as="digits">'+ip.replace("."," . ")+'</say-as>. You can ask me to start a job running now.'
 
         handler_input.response_builder.speak(speech_text).set_card(
-            SimpleCard("Parallel Cluster", speech_text)).set_should_end_session(
-            True)
+            SimpleCard("Parallel Cluster", speech_text)).set_should_end_session(end_session)
         return handler_input.response_builder.response
 
 
