@@ -1,3 +1,3 @@
 ask-sdk-core
-git+https://github.com/AcrossTheCloud/aws-parallelcluster.git#subdirectory=cli
+git+https://github.com/AcrossTheCloud/aws-parallelcluster.git@Alexa-HPC#subdirectory=cli
 paramiko
