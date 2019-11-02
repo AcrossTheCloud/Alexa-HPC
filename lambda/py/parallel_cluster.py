@@ -166,9 +166,9 @@ class HPCStartJobIntentHandler(AbstractRequestHandler):
         c.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
         print("Connecting to " + ip)
-        c.connect(hostname=ip, username="ec2-user", pkey=ssh_key)
+        c.connect(hostname=ip, username="ubuntu", pkey=ssh_key)
 
-        command = "source /home/ec2-user/.bash_profile && Rscript /home/ec2-user/rmpi_test.R > /home/ec2-user/job.out"
+        command = "Rscript /home/ubuntu/rmpi_test.R"
 
         stdin, stdout, stderr = c.exec_command(command)
         stdout = stdout.read().decode('utf-8')
@@ -177,21 +177,19 @@ class HPCStartJobIntentHandler(AbstractRequestHandler):
         print(stdout)
         print(stdin)
 
-        pattern = re.compile(r'\s+')
-        stderr_no_whitespace = re.sub(pattern, '', stderr)
+        speech_text = "Job started. "
+        for line in stdout.splitlines():
+            if '"' in line:
+                speech_text += " ".join(re.findall(r'"([^"]*)"', line)) + ". "
+        handler_input.response_builder.speak(speech_text).set_card(
+            SimpleCard("Parallel Cluster", speech_text)).set_should_end_session(
+            True)
+        print(speech_text)
 
-        if len(stderr_no_whitespace) > 0:  # fixme - need to check stdout for something expected
-            handler_input.response_builder.speak("There was an error starting your job. " + stderr).set_card(
-                SimpleCard("Parallel Cluster", "There was an error starting your job. " + stderr)).set_should_end_session(
-                True)
-        else:
-            speech_text = "Job started."
-            for line in stdout.splitlines():
-                if '"' in line:
-                    speechtext += re.findall(r'"([^"]*)"', line) + " "
-            handler_input.response_builder.speak(speech_text).set_card(
-                SimpleCard("Parallel Cluster", speech_text)).set_should_end_session(
-                True)
+        if speech_text == "Job started. ": # still, the same, something went wrong
+          handler_input.response_builder.speak("There was an error running your job. " + stderr).set_card(
+            SimpleCard("Parallel Cluster", "There was an error running your job. " + stderr)).set_should_end_session(
+            True)
 
         return handler_input.response_builder.response
 
