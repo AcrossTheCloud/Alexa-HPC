@@ -49,16 +49,6 @@
                     ]
                 },
                 {
-                    "name": "HPCJobOutputIntent",
-                    "slots": [],
-                    "samples": [
-                        "tell me the job output",
-                        "for job output",
-                        "get job output",
-                        "job output"
-                    ]
-                },
-                {
                     "name": "DeleteHPCIntent",
                     "slots": [],
                     "samples": [

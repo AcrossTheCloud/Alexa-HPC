@@ -193,69 +193,6 @@ class HPCStartJobIntentHandler(AbstractRequestHandler):
 
         return handler_input.response_builder.response
 
-
-class HPCJobOutputIntentHandler(AbstractRequestHandler):
-    """Handler for job output"""
-
-    def can_handle(self, handler_input):
-            # type: (HandlerInput) -> bool
-        return is_intent_name("HPCJobOutputIntent")(handler_input)
-
-    def handle(self, handler_input):
-        s3_client = boto3.client('s3')
-        #Download private key file from secure S3 bucket
-        s3_client.download_file(os.getenv('S3_KEY_BUCKET'),
-                                'alexa-hpc.pem', '/tmp/keyname.pem')
-
-        completed = subprocess.run(  # need to run again without -nw to get full listing for IP address
-            ['./pcluster-cli',
-             'status',
-             '-c', '.parallelcluster/config',
-             'myAlexaCluster'],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            encoding='utf-8'
-        )
-        ip = "127.0.0.1"
-        for line in completed.stdout.splitlines():
-            if "MasterPublicIP" in line:
-                ip = line.split(": ")[1]
-
-        ssh_key = paramiko.RSAKey.from_private_key_file("/tmp/keyname.pem")
-        c = paramiko.SSHClient()
-        c.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-
-        print("Connecting to " + ip)
-        c.connect(hostname=ip, username="ec2-user", pkey=ssh_key)
-
-        command = "cat /home/ec2-user/job.out"
-
-        stdin, stdout, stderr = c.exec_command(command)
-        stdout = stdout.read().decode('utf-8')
-        stderr = stderr.read().decode('utf-8')
-
-        print(stdout)
-        print(stdin)
-
-        pattern = re.compile(r'\s+')
-        stderr_no_whitespace = re.sub(pattern, '', stderr)
-
-        if len(stderr_no_whitespace) > 0:  # fixme - need to check stdout for something expected
-            handler_input.response_builder.speak(stderr).set_card(
-                SimpleCard("Parallel Cluster", stderr)).set_should_end_session(
-                True)
-        else:
-            speech_text = ""
-            for line in stdout.splitlines():
-                if '"' in line:
-                    speech_text += re.findall(r'"([^"]*)"', line)[0] + ". "
-            handler_input.response_builder.speak(speech_text).set_card(
-                SimpleCard("Parallel Cluster", speech_text)).set_should_end_session(
-                True)
-
-        return handler_input.response_builder.response
-
-
 class DeleteHPCIntentHandler(AbstractRequestHandler):
     """Handler for Delete HPC Intent."""
 
