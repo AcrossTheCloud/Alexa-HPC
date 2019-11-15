@@ -44,6 +44,7 @@
                     "samples": [
                         "start job",
                         "start a job",
+                        "submit job",
                         "start a job running",
                         "start my job running"
                     ]
