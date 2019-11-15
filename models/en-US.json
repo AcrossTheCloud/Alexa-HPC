@@ -39,6 +39,15 @@
                     ]
                 },
                 {
+                    "name": "HPCInstanceTypeIntent",
+                    "slots": [],
+                    "samples": [
+                        "for instance types",
+                        "about instance types",
+                        "instance types"
+                    ]
+                },
+                {
                     "name": "HPCStartJobIntent",
                     "slots": [
                         {

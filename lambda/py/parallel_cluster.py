@@ -133,6 +133,20 @@ class HPCStatusIntentHandler(AbstractRequestHandler):
             SimpleCard("Parallel Cluster", speech_text)).set_should_end_session(end_session)
         return handler_input.response_builder.response
 
+class HPCIntentHandler(AbstractRequestHandler):
+    """Handler for HPC Instance Type Intent."""
+
+    def can_handle(self, handler_input):
+        # type: (HandlerInput) -> bool
+        return is_intent_name("HPCInstanceTypeIntent")(handler_input)
+
+    def handle(self, handler_input):
+        # type: (HandlerInput) -> Response
+        speech_text = 'The master node is an EC2 instance of type t3 micro. The two compute nodes are EC2 instances of type t3 small.'
+        card_text = 'The master node is an EC2 instance of type t3.micro. The two compute nodes are EC2 instances of type t3.small.'
+        handler_input.response_builder.speak(speech_text).set_card(
+            SimpleCard("Parallel Cluster", speech_text)).set_should_end_session(True)
+        return handler_input.response_builder.response
 
 class HPCStartJobIntentHandler(AbstractRequestHandler):
     """Handler for starting a job"""
@@ -283,8 +297,8 @@ class FallbackIntentHandler(AbstractRequestHandler):
         # type: (HandlerInput) -> Response
         speech_text = (
             "The Alexa Parallel Cluster skill can't help you with that.  "
-            "You can ask me to launch cluster, check cluster, start job one, two, or three, or delete cluster.")
-        reprompt = "You can ask me to launch cluster, check cluster, start job one, two, or three, or delete cluster."
+            "You can ask me to launch cluster, check cluster, start job one, two, or three, about instance types, or delete cluster.")
+        reprompt = "You can ask me to launch cluster, check cluster, start job one, two, or three, about instance types, or delete cluster."
         handler_input.response_builder.speak(speech_text).ask(reprompt)
         return handler_input.response_builder.response
 
@@ -321,6 +335,7 @@ class CatchAllExceptionHandler(AbstractExceptionHandler):
 sb.add_request_handler(LaunchRequestHandler())
 sb.add_request_handler(StartHPCIntentHandler())
 sb.add_request_handler(HPCStatusIntentHandler())
+sb.add_request_handler(HPCInstanceTypeIntentHandler())
 sb.add_request_handler(HPCStartJobIntentHandler())
 sb.add_request_handler(DeleteHPCIntentHandler())
 sb.add_request_handler(HelpIntentHandler())
