@@ -90,6 +90,7 @@ class HPCStatusIntentHandler(AbstractRequestHandler):
     def handle(self, handler_input):
         # type: (HandlerInput) -> Response
         speech_text = "Your cluster is starting." # default
+        card_text = speech_text
 
         completed = subprocess.run(
             ['./pcluster-cli',
@@ -107,9 +108,11 @@ class HPCStatusIntentHandler(AbstractRequestHandler):
 
         if "DELETE_IN_PROGRESS" in completed.stdout:
             speech_text = "Your cluster is being deleted."
+            card_text = speech_text
 
         if "does not exist" in completed.stdout:
             speech_text = "Your cluster has been deleted."
+            card_text = speech_text
 
         end_session = True
         
@@ -128,6 +131,7 @@ class HPCStatusIntentHandler(AbstractRequestHandler):
                 if "MasterPublicIP" in line:
                     ip = line.split(": ")[1]
                     speech_text = 'Your cluster has started. The master node IP address is <say-as interpret-as="digits">'+ip.replace("."," . ")+'</say-as>. You can ask me to start a job running now.'
+                    card_text = 'Your cluster has started. The master node IP address is ' + ip + '. You can ask me to start a job running now.'
 
         handler_input.response_builder.speak(speech_text).set_card(
             SimpleCard("Parallel Cluster", speech_text)).set_should_end_session(end_session)
