@@ -137,7 +137,7 @@ class HPCStatusIntentHandler(AbstractRequestHandler):
             SimpleCard("Parallel Cluster", card_text)).set_should_end_session(end_session)
         return handler_input.response_builder.response
 
-class HPCIntentHandler(AbstractRequestHandler):
+class HPCInstanceTypeIntentHandler(AbstractRequestHandler):
     """Handler for HPC Instance Type Intent."""
 
     def can_handle(self, handler_input):
