@@ -40,13 +40,17 @@
                 },
                 {
                     "name": "HPCStartJobIntent",
-                    "slots": [],
+                    "slots": [
+                        {
+                            "name": "job_no", 
+                            "type": "AMAZON.NUMBER",
+                            "confirmationRequired": false,
+                            "elicitationRequired": false
+                        }
+                    ],
                     "samples": [
-                        "start job",
-                        "start a job",
-                        "submit job",
-                        "start a job running",
-                        "start my job running"
+                        "start job {job_no}",
+                        "submit job {job_no}"
                     ]
                 },
                 {

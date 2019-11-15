@@ -142,6 +142,15 @@ class HPCStartJobIntentHandler(AbstractRequestHandler):
         return is_intent_name("HPCStartJobIntent")(handler_input)
 
     def handle(self, handler_input):
+        print(handler_input.request_envelope.request.intent.slots)
+        if (handler_input.request_envelope.request.intent.slots["job_no"].value is None) or (handler_input.request_envelope.request.intent.slots["job_no"].value is '?') or int(handler_input.request_envelope.request.intent.slots["job_no"].value) < 1 or int(handler_input.request_envelope.request.intent.slots["job_no"].value) > 3:
+            handler_input.response_builder.speak("You must give a job number between one and three.").set_card(
+                SimpleCard("Parallel Cluster", "There was an error running your job.")).set_should_end_session(
+                True)
+            return handler_input.response_builder.response
+        else:
+            job_no = int(handler_input.request_envelope.request.intent.slots["job_no"].value)
+
         s3_client = boto3.client('s3')
         #Download private key file from secure S3 bucket
         s3_client.download_file(os.getenv('S3_KEY_BUCKET'),
@@ -168,7 +177,7 @@ class HPCStartJobIntentHandler(AbstractRequestHandler):
         print("Connecting to " + ip)
         c.connect(hostname=ip, username="ubuntu", pkey=ssh_key)
 
-        command = "Rscript /home/ubuntu/rmpi_test.R"
+        command = "Rscript /home/ubuntu/rmpi_test_"+str(job_no)+".R"
 
         stdin, stdout, stderr = c.exec_command(command)
         stdout = stdout.read().decode('utf-8')
@@ -177,7 +186,7 @@ class HPCStartJobIntentHandler(AbstractRequestHandler):
         print(stdout)
         print(stdin)
 
-        speech_text = "Job started. "
+        speech_text = "The job ran. "
         for line in stdout.splitlines():
             if '"' in line:
                 speech_text += " ".join(re.findall(r'"([^"]*)"', line)) + ". "
@@ -186,7 +195,7 @@ class HPCStartJobIntentHandler(AbstractRequestHandler):
             True)
         print(speech_text)
 
-        if speech_text == "Job started. ": # still, the same, something went wrong
+        if speech_text == "The job ran. ": # still, the same, something went wrong
           handler_input.response_builder.speak("There was an error running your job. " + stderr).set_card(
             SimpleCard("Parallel Cluster", "There was an error running your job. " + stderr)).set_should_end_session(
             True)
@@ -274,8 +283,8 @@ class FallbackIntentHandler(AbstractRequestHandler):
         # type: (HandlerInput) -> Response
         speech_text = (
             "The Alexa Parallel Cluster skill can't help you with that.  "
-            "You can ask me to launch a cluster, check a cluster, start a job, get job output, or delete a cluster.")
-        reprompt = "You can ask me to launch a cluster, check a cluster, start a job, get job output, or delete a cluster.."
+            "You can ask me to launch cluster, check cluster, start job one, two, or three, or delete cluster.")
+        reprompt = "You can ask me to launch cluster, check cluster, start job one, two, or three, or delete cluster."
         handler_input.response_builder.speak(speech_text).ask(reprompt)
         return handler_input.response_builder.response
 
