@@ -134,7 +134,7 @@ class HPCStatusIntentHandler(AbstractRequestHandler):
                     card_text = 'Your cluster has started. The master node IP address is ' + ip + '. You can ask me to start a job running now.'
 
         handler_input.response_builder.speak(speech_text).set_card(
-            SimpleCard("Parallel Cluster", speech_text)).set_should_end_session(end_session)
+            SimpleCard("Parallel Cluster", card_text)).set_should_end_session(end_session)
         return handler_input.response_builder.response
 
 class HPCIntentHandler(AbstractRequestHandler):
@@ -149,7 +149,7 @@ class HPCIntentHandler(AbstractRequestHandler):
         speech_text = 'The master node is an EC2 instance of type t3 micro. The two compute nodes are EC2 instances of type t3 small.'
         card_text = 'The master node is an EC2 instance of type t3.micro. The two compute nodes are EC2 instances of type t3.small.'
         handler_input.response_builder.speak(speech_text).set_card(
-            SimpleCard("Parallel Cluster", speech_text)).set_should_end_session(True)
+            SimpleCard("Parallel Cluster", card_text)).set_should_end_session(True)
         return handler_input.response_builder.response
 
 class HPCStartJobIntentHandler(AbstractRequestHandler):
